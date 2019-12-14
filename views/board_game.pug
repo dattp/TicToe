@@ -1,0 +1,167 @@
+doctype html
+head
+  title Cotato
+  meta(charset='utf-8')
+  meta(name='viewport' content='width=device-width, initial-scale=1')
+  link(rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css')
+  script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js')
+  script(src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js')
+  script(src='https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js')
+  script(src='/socket.io/socket.io.js')
+  style.
+    .grid-container {
+    display: grid;
+    grid-gap: 50px;
+    grid-template-columns: auto auto auto;
+    background-color: #2196F3;
+    padding: 10px;
+    }
+    .grid-item {
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    font-size: 30px;
+    text-align: center;
+    }
+    footer {
+      background-color: #777;
+      padding: 20px;
+      text-align: center;
+      color: white;
+    }
+
+.container
+  nav.navbar.navbar-expand-sm.bg-dark.navbar-dark
+    // Brand
+    a.navbar-brand(href='/tables/getlist') Tictoe
+    // Links
+    ul.navbar-nav
+      li.nav-item
+        a.nav-link(href='/gameplay') Rank
+      // Dropdown
+      li.nav-item.dropdown.navbar-right
+        a.username#navbardrop.nav-link.dropdown-toggle(href='#' data-toggle='dropdown')= username
+        .dropdown-menu
+          a.dropdown-item(href='#') Logout
+  br
+  button.btn.btn-success(type='button' data-toggle='modal' data-target='#myModal') Create Table
+  br
+  br
+  #list-table.grid-container
+    each table in list_table
+      - var url = '/tables/gameplay/' + table.id
+      - var players = table.players
+      - var idTable = table.id
+      - var player_number = 'player_number' + idTable
+      a(href=url onclick='getValues(this)').grid-item
+        h5= table.name
+        h5(class=player_number) #{table.players.length} / 2
+        input(class='playersNumber' type='hidden' name='players' value=players)
+        input(class='tableId' type='hidden' name='idTable' value=idTable)
+  br
+  footer
+    p Tictoe game by SML
+
+#myModal.modal.fade
+  .modal-dialog
+    .modal-content
+      // Modal Header
+      .modal-header
+        h4.modal-title TicToe
+        button.close(type='button' data-dismiss='modal') &times;
+      // Modal body
+      .modal-body
+        input#addTable.form-control(type='hidden' name='addTable')
+        .form-group
+          label Name
+          input#name.form-control(type='string' name='name')
+        .form-group
+          label Description
+          input#description.form-control(type='string' name='description')
+        input#action(type='hidden' name='command')
+      // Modal footer
+      .modal-footer
+        button#btnAddTable.btn.btn-success(type='button' data-dismiss='modal') OK
+
+script.
+    var username = $(".username").text();
+    console.log('======>username: ', username)
+    var tk2 = {
+      query:  {
+        username: username
+      }
+    }
+    socket = io("/", tk2, { transports: ['websocket'] });
+
+    socket.on('submit_join', (data1, data2) => {
+      if (!data1) {
+        alert('Table full')
+        window.location.href = "/tables/getlist";
+      }
+      if (data2) {
+        alert('You are in the room')
+        window.location.href = "/tables/getlist";
+      }
+    })
+
+    socket.on('count_player', data => {
+      let {message,tableId} = data
+      console.log('======>count player: ', message)
+      $('.player_number' + tableId).html(message)
+    })
+  function getValues(obj){
+    var tableId = $(obj).find('.tableId').val()
+    socket.emit('pre_join', tableId)
+  }
+
+  var selectButton = $("#btnAddTable");
+  selectButton.on("click", async function () {
+    var name = $("#name").val();
+    var description = $("#description").val();
+    let data = {
+      name: name,
+      description: description
+    }
+    //- let result = await postData(data)
+    alert("Thêm bàn thành công");
+    $("#list-table").append(`<div class="grid-item">
+                              <h5>${name}
+                              <h5>${description}
+                             </div>`)
+  });
+  
+  //- async function postData(data = {}) {
+  //-   let url = 'http://localhost:3000/tables/addtable'
+  //-   const response = await fetch(url, {
+  //-     method: 'POST',
+  //-     cache: 'no-cache',
+  //-     headers: {
+  //-       'Content-Type': 'application/json'
+  //-     },
+  //-     redirect: 'follow',
+  //-     referrer: 'no-referrer', 
+  //-     body: JSON.stringify(data)
+  //-   });
+  //-   console.log('=====>response: ', response)
+  //-   return await response.json();
+  //- }
+
+  var selectButton2 = $("#btnEditTodo");
+  selectButton2.on("click", async function () {
+    var name = $("#name").val();
+    var description = $("#description").val();
+    console.log('====123: ', name)
+    let data = {
+      name: name,
+      description: description
+    }
+    let result = await  postData(data)
+    console.log('====>result: ', result)
+    alert("Thêm công việc thành công");
+    $("#rowData").append(`<tr>
+                            <td>${result.name}</td>
+                            <td>${result.description}</td>
+                            <td><button class="btn btn-primary" type="button">Edit</button></td>
+                            <td><button class="btn btn-danger" type="button">Delete</button></td>
+                          </tr>`)
+  });

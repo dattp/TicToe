@@ -1,0 +1,43 @@
+doctype html
+head
+  title Cotato
+  meta(charset='utf-8')
+  meta(name='viewport' content='width=device-width, initial-scale=1')
+  link(rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css')
+  script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js')
+  script(src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js')
+  script(src='https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js')
+  script(src='https://d3js.org/d3.v4.min.js')
+  script(src='/socket.io/socket.io.js')
+
+.container
+  nav.navbar.navbar-expand-sm.bg-dark.navbar-dark
+    // Brand
+    a.navbar-brand(href='/success') Tictoe
+    // Links
+    ul.navbar-nav
+      li.nav-item
+        a.nav-link(href='#') Rank
+      // Dropdown
+      li.nav-item.dropdown.navbar-right
+        a#navbardrop.username.nav-link.dropdown-toggle(href='#' data-toggle='dropdown')= username
+        .dropdown-menu
+          a.dropdown-item(href='#') Logout
+  br
+  br
+
+// scrip
+script.
+  var name = $(".username").text();
+  console.log('======>check name: ', name)
+  let roomID = 12332145
+    var tk = "{\"query\": {\"room_id\": \"" + roomID + "\"}}"
+    var tk2 = {
+      query:  {
+        room_id: 1000003,
+        username: name
+      }
+    }
+    var opt = JSON.parse(tk)
+    socket = io("http://192.168.1.117:3000", tk2, { transports: ['websocket'] });
+

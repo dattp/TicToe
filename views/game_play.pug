@@ -1,0 +1,195 @@
+doctype html
+head
+  title Cotato
+  meta(charset='utf-8')
+  meta(name='viewport' content='width=device-width, initial-scale=1')
+  link(rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css')
+  script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js')
+  script(src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js')
+  script(src='https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js')
+  script(src='https://d3js.org/d3.v4.min.js')
+  script(src='/socket.io/socket.io.js')
+  style.
+    footer {
+      background-color: #777;
+      padding: 20px;
+      text-align: center;
+      color: white;
+    }
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      text-align: center;
+    }
+    th, td {
+      padding: 5px;
+    }
+body.container(onbeforeunload="HandleBackFunctionality()")
+  nav.navbar.navbar-expand-sm.bg-dark.navbar-dark
+    // Brand
+    a.navbar-brand(href='/tables/getlist') Tictoe
+    // Links
+    ul.navbar-nav
+      li.nav-item
+        a.nav-link(href='#') Rank
+      // Dropdown
+      li.nav-item.dropdown.navbar-right
+        a.username#navbardrop.username.nav-link.dropdown-toggle(href='#' data-toggle='dropdown')= username
+        .dropdown-menu
+          a.dropdown-item(href='#') Logout
+  br
+  button#btn-back.btn.btn-info(type='button') Exit
+  br
+  br
+  table(style='width:100%')
+    tr
+      th Room ID
+      th Room Name
+      th Opponent
+    tr
+      td#room_id= room_id
+      td= room_id
+      td#opponent
+  br      
+  br
+  br
+  div#btn-refesh
+  br
+  h5#turn
+  br
+  #boxContent
+
+  br
+  footer
+    p Tictoe game by SML
+#myModal.modal.fade
+  .modal-dialog
+    .modal-content
+      // Modal Header
+      .modal-header
+        h4.modal-title TicToe
+        button.close(type='button' data-dismiss='modal') &times;
+      // Modal body
+      .modal-body
+        h5#message message
+      // Modal footer
+      .modal-footer
+        button#btnConfirm.btn.btn-success(type='button' data-dismiss='modal') OK
+// scrip
+script.
+  var username = $(".username").text();
+  var roomId = $("#room_id").text();
+  let checkGameOver = false
+  console.log(username)
+  console.log('========>roomId: ', roomId)
+    var tk2 = {
+      query:  {
+        username: username,
+        page: 2,
+        room_id: roomId
+      }
+    }
+    socket = io("/", tk2, { transports: ['websocket'] });
+
+  const div = d3.select("#boxContent").append("div").attr("id", "content").style("text-align","center");
+    // create <svg>
+  const svg = div.append("svg").attr("width", 600).attr("height", 600);
+
+  socket.emit('join_table', {room_id: roomId, username: username, players: []})
+  socket.on('opponent', data => {
+    $('#opponent').html(data)
+  })
+  socket.on('submit_join', (data1, data2, back) => {
+    if (back) {
+      window.location.href = "/tables/getlist";
+    }
+  })
+  // back buton
+    var selectButton = $("#btn-back");
+  selectButton.on("click", async function () {
+    socket.emit('left_room', roomId)
+    window.location.href = "/tables/getlist";
+  });
+  socket.on('youdisconnect', data => {
+    console.log(data)
+    alert(data)
+    window.location.href = "/tables/getlist";
+  })
+  let boxsize =40 // kich thuoc cua moi o vuong
+    let n= 15 // so luong o vuong tren 1 hang
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        // draw each chess field
+        const box = svg.append("rect")
+          .attr("x", i * boxsize)
+          .attr("y", j * boxsize)
+          .attr("width", boxsize)
+          .attr("height", boxsize)
+          .attr("id", "b" + i + j)
+          .style("stroke","black")
+          .on("click", function () {
+            let selected = d3.select(this);
+            if (!checkGameOver){
+            console.log({x: selected.attr('x'), y: selected.attr('y')})
+            socket.emit("click_cell", {x: selected.attr('x'), y: selected.attr('y')})
+
+            }
+          });
+        if ((i + j) % 2 === 0) {
+          box.attr("fill", "beige");
+        } else {
+          box.attr("fill", "beige");
+        }
+      }
+    }
+  socket.on('wait_player', data => {
+    alert(data)
+  })
+  socket.on("server_send_data", function (data) {
+    const tick = svg
+      .append("text")
+      .attr("x", parseInt(data.x))
+      .attr("y", parseInt(data.y))
+      .attr("text-anchor", "middle")
+      .attr("dx", boxsize / 2)
+      .attr("dy", boxsize / 2 + 8)
+      .text(function () {
+        if (data.nguoichoi === 1) {
+          return "X"
+        }
+        else if (data.nguoichoi === 0) {
+          return "O"
+        }
+      })
+      .style("font-weight", "bold")
+      .style("font-size", "30px")
+      .style("fill", function () {
+        if (data.nguoichoi === 1) {
+          return "000066"
+        }
+        else if (data.nguoichoi === 0) {
+          return "FF0000"
+        }
+      })
+    })
+
+    socket.on('winner', data => {
+      checkGameOver = true
+      $('#message').html(data)
+      $('#myModal').modal()
+      $('#btn-refesh').append('<button id="refesh" class="btn btn-primary" type="button">new game</button>')
+    })
+  var selectButton = $("#btnConfirm");
+  selectButton.on("click", async function () {
+    let url = '/tables/gameplay/' + roomId
+    window.location.href = url;
+  });
+  socket.on('your_turn', (check) => {
+    if (check) $('#turn').html('Your turn!')
+    else $('#turn').html('Not your turn!')
+  })
+  var selectButton2 = $("#btn-refesh");
+  selectButton2.on("click", function () {
+    let url = '/tables/gameplay/' + roomId
+    window.location.href = url;
+  });
