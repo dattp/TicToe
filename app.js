@@ -5,7 +5,30 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const session = require('express-session')
 const flash = require('connect-flash');
-require('./tasks/connectDB')
+
+const isDev = process.env.NODE_ENV !== 'production'
+
+console.log('========>isDev: ', isDev);
+
+// chạy trên môi trường dev - sưer dụng mongo local
+if (isDev) {
+  const connectDB = require('./tasks/db_local')
+  const mongoose = require('mongoose')
+
+  connectDB('tictoe').then(async uri => {
+    console.log('======>uri: ', uri);
+
+    mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    })
+    console.log('=====>connectDB');
+  })
+} else {
+  require('./tasks/connectDB')
+}
+
+require('./tasks/db_local')
 
 var passportConfig = require('./config/passport');
 
@@ -26,7 +49,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
-  secret : "secret",
+  secret: "secret",
   saveUninitialized: true,
   resave: true
 }))
@@ -38,17 +61,17 @@ app.use('/tables', tablesRouter);
 passportConfig(app);
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   next(createError(404));
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
   console.log(err.stack);
-  
+
   // render the error page
   res.status(err.status || 500);
   res.render('error');
