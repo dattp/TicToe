@@ -30,3 +30,9 @@ $ npm start
 ```
 
 > Bật thêm trình duyệt thứ 2 và chạy npm start để chơi 2 người.
+
+Deploy
+  - deploy lên heroku: https://dashboard.heroku.com
+  - tạo db-mongo: https://mlab.com/home
+
+Link demo: https://cotato.herokuapp.com
