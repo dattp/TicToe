@@ -20,7 +20,7 @@
     "passport": "^0.4.0",
     "passport-local": "^1.0.0",
     "pug": "^3.0.1",
-    "socket.io": "^2.4.0"
+    "socket.io": "^2.5.0"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^2.11.0",
